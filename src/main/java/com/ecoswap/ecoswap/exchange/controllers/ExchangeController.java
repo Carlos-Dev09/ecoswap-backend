@@ -1,5 +1,6 @@
 package com.ecoswap.ecoswap.exchange.controllers;
 
+import com.ecoswap.ecoswap.exchange.models.dto.CreateExchangeRequestDTO;
 import com.ecoswap.ecoswap.exchange.models.dto.ExchangeDTO;
 import com.ecoswap.ecoswap.exchange.services.ExchangeService;
 import com.ecoswap.ecoswap.product.models.dto.ProductDTO;
@@ -23,6 +24,11 @@ public class ExchangeController {
     @PostMapping("/create-exchange")
     public ResponseEntity<ExchangeDTO> createRequestExchange(@RequestBody ExchangeDTO exchangeDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(exchangeService.createRequestExchange(exchangeDTO));
+    }
+
+    @PostMapping("/create-exchange-existing-product")
+    public ResponseEntity<ExchangeDTO> createRequestExchangeWithExistingProduct(@RequestBody CreateExchangeRequestDTO request){
+        return ResponseEntity.status(HttpStatus.CREATED).body(exchangeService.createRequestExchangeWithExistingProduct(request));
     }
 
     @PostMapping("/select-exchange")

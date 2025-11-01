@@ -56,16 +56,20 @@ public class HttpSecurityConfig {
                     authorize.requestMatchers(HttpMethod.GET, "/api/v1/product/category/{category}").permitAll();
 
                     authorize.requestMatchers(HttpMethod.POST, "/api/v1/product/create").permitAll();
-                    authorize.requestMatchers(HttpMethod.GET, "/api/v1/product").permitAll();
-                    authorize.requestMatchers(HttpMethod.DELETE, "/api/v1/product/{id}").permitAll();
+                    authorize.requestMatchers(HttpMethod.GET, "/api/v1/product/user").permitAll();
+                    authorize.requestMatchers(HttpMethod.GET, "/api/v1/product/active/user/{userId}").permitAll();
+                    authorize.requestMatchers(HttpMethod.GET, "/api/v1/product/{id}").permitAll();
                     authorize.requestMatchers(HttpMethod.PUT, "/product/{id}").permitAll();
                     authorize.requestMatchers(HttpMethod.GET, "/api/v1/product/{id}").permitAll();
                     authorize.requestMatchers(HttpMethod.GET, "api/v1/product/recent").permitAll();
                     authorize.requestMatchers(HttpMethod.GET, "api/v1/products/counts").permitAll();
 
+                    authorize.requestMatchers(HttpMethod.GET, "api/v1/product/**").permitAll();
+
                     authorize.requestMatchers(HttpMethod.GET, "/images/**").permitAll();
 
                     authorize.requestMatchers(HttpMethod.POST, "/api/v1/create-exchange").permitAll();
+                    authorize.requestMatchers(HttpMethod.POST, "/api/v1/create-exchange-existing-product").permitAll();
                     authorize.requestMatchers(HttpMethod.POST, "/api/v1/select-exchange").permitAll();
                     authorize.requestMatchers(HttpMethod.POST, "/api/v1/exchanges").permitAll();
                     authorize.requestMatchers(HttpMethod.GET, "/api/v1/exchanges/counts").permitAll();
@@ -106,6 +110,22 @@ public class HttpSecurityConfig {
 
 
 
+
+                    // Rutas del AI Assistant
+                    authorize.requestMatchers(HttpMethod.POST, "/api/v1/ai/assistant").permitAll();
+                    authorize.requestMatchers(HttpMethod.POST, "/chat/assistant").permitAll();
+                    authorize.requestMatchers(HttpMethod.GET, "/api/v1/ai/suggestions/**").permitAll();
+                    authorize.requestMatchers(HttpMethod.POST, "/api/v1/ai/quick-help").permitAll();
+
+                    // Rutas de asistente de intercambio
+                    authorize.requestMatchers(HttpMethod.GET, "/chat").permitAll();
+                    // authorize.requestMatchers(HttpMethod.GET, "/chat/search-products").permitAll();
+
+                    // Rutas de sesiones de chat
+                    // authorize.requestMatchers(HttpMethod.POST, "/chat/session/new").permitAll();
+                    // authorize.requestMatchers(HttpMethod.POST, "/chat/session/*/message").permitAll();
+                    // authorize.requestMatchers(HttpMethod.GET, "/chat/session/*/history").permitAll();
+                    // authorize.requestMatchers(HttpMethod.POST, "/chat/session/*/close").permitAll();
 
                     // authorize.requestMatchers(HttpMethod.POST, "/api/v1/create").hasAuthority(Permission.SAVE_ONE_PRODUCT.name());
 

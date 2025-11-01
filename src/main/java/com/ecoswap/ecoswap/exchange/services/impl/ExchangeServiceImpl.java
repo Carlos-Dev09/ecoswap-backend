@@ -1,6 +1,7 @@
 package com.ecoswap.ecoswap.exchange.services.impl;
 
 import com.ecoswap.ecoswap.exchange.exceptions.ExchangeNotFoundException;
+import com.ecoswap.ecoswap.exchange.models.dto.CreateExchangeRequestDTO;
 import com.ecoswap.ecoswap.exchange.models.dto.ExchangeDTO;
 import com.ecoswap.ecoswap.exchange.models.entities.Exchange;
 import com.ecoswap.ecoswap.exchange.repositories.ExchangeRepository;
@@ -67,6 +68,60 @@ public class ExchangeServiceImpl implements ExchangeService {
         notificationService.sendNotification(userDTO, "Tienes una nueva solicitud de intercambio para tu producto: " + 
         productTo2.get().getTitle());
 
+        ExchangeDTO responseExchange = new ExchangeDTO();
+        responseExchange.setId(exchange.getId());
+        responseExchange.setStatus(exchange.getStatus());
+        responseExchange.setExchangeRequestedAt(exchange.getExchangeRequestedAt());
+        responseExchange.setExchangeRespondedAt(exchange.getExchangeRespondedAt());
+        responseExchange.setProductTo(exchange.getProductTo());
+        responseExchange.setProductFrom(exchange.getProductFrom());
+
+        return responseExchange;
+    }
+
+    @Override
+    public ExchangeDTO createRequestExchangeWithExistingProduct(CreateExchangeRequestDTO request) {
+        // Verificar que los productos existen
+        Product productFrom = productRepository.findById(request.getProductFromId())
+                .orElseThrow(() -> new RuntimeException("El producto a intercambiar no existe"));
+        
+        Product productTo = productRepository.findById(request.getProductToId())
+                .orElseThrow(() -> new RuntimeException("El producto solicitado no existe"));
+
+        // Verificar que el producto a intercambiar pertenece al usuario actual
+        // TODO: Agregar validación de usuario cuando tengas el contexto de seguridad
+
+        // Verificar que el producto esté activo y disponible para intercambio
+        if (!"activo".equals(productFrom.getProductStatus())) {
+            throw new RuntimeException("El producto que quieres intercambiar no está disponible");
+        }
+
+        if (!"activo".equals(productTo.getProductStatus())) {
+            throw new RuntimeException("El producto solicitado no está disponible");
+        }
+
+        // Crear el intercambio
+        Exchange exchange = new Exchange();
+        exchange.setStatus("pendiente");
+        exchange.setExchangeRequestedAt(LocalDateTime.now());
+        exchange.setExchangeRespondedAt(LocalDateTime.now());
+        exchange.setProductFrom(productFrom);
+        exchange.setProductTo(productTo);
+
+        exchangeRepository.save(exchange);
+
+        // Enviar notificación al propietario del producto solicitado
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(productTo.getUser().getId());
+        userDTO.setName(productTo.getUser().getName());
+        userDTO.setEmail(productTo.getUser().getEmail());
+        userDTO.setAddress(productTo.getUser().getAddress());
+        userDTO.setCellphoneNumber(productTo.getUser().getCellphoneNumber());
+
+        notificationService.sendNotification(userDTO, "Tienes una nueva solicitud de intercambio para tu producto: " + 
+                productTo.getTitle());
+
+        // Crear respuesta
         ExchangeDTO responseExchange = new ExchangeDTO();
         responseExchange.setId(exchange.getId());
         responseExchange.setStatus(exchange.getStatus());
