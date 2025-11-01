@@ -15,6 +15,7 @@ import com.ecoswap.ecoswap.product.exceptions.FileFormatException;
 import com.ecoswap.ecoswap.product.exceptions.ProductCreationException;
 import com.ecoswap.ecoswap.product.models.dto.ProductResponseDTO;
 import com.ecoswap.ecoswap.user.models.entities.User;
+import com.ecoswap.ecoswap.user.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -41,6 +42,9 @@ public class ProductServicesImpl implements ProductService{
 
     @Autowired
     private ExchangeRepository exchangeRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${image.storage.path}")
     private String storageFolderPath;
@@ -270,7 +274,19 @@ public class ProductServicesImpl implements ProductService{
     }
 
     @Override
-    @Scheduled(fixedRate = 10000)
+    public List<ProductDTO> getActiveProductsByUserId(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        List<Product> activeProducts = productRepository.findByUserAndProductStatus(user, "activo");
+        
+        return activeProducts.stream()
+                .map(this::mapToProductDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Scheduled(fixedRate = 2000)
     public void markProductsAsInactiveFromCompletedExchanges() {
          List<Exchange> completedExchanges = exchangeRepository.findByStatus("completado");
 
@@ -301,13 +317,27 @@ public class ProductServicesImpl implements ProductService{
             product.getImageProduct(),
             product.getReleaseDate(),
             new UserDTO(
-                product.getId(),
+                product.getUser().getId(),
                 product.getUser().getName(),
                 product.getUser().getEmail(),
                 product.getUser().getAddress(),
                 product.getUser().getCellphoneNumber()
             )
         );
+    }
+
+    @Override
+    public String getActiveProductsSummary() {
+        List<Product> activeProducts = productRepository.findByProductStatus("activo");
+        StringBuilder summary = new StringBuilder("Resumen de Productos Activos:\n");
+        for (Product product : activeProducts) {
+            summary.append("- Título: ").append(product.getTitle())
+                   .append(", Categoría: ").append(product.getCategory())
+                   .append(", Condición: ").append(product.getConditionProduct())
+                   .append(", Fecha: ").append(product.getReleaseDate())
+                   .append("\n");
+        }
+        return summary.toString();
     }
     
 

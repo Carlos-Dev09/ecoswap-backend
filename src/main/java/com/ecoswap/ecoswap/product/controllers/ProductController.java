@@ -47,6 +47,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductsByUser());
     }
 
+    @GetMapping("/product/active/user/{userId}")
+    public ResponseEntity<List<ProductDTO>> getActiveProductsByUserId(@PathVariable Long userId){
+        return ResponseEntity.ok(productService.getActiveProductsByUserId(userId));
+    }
+
     @GetMapping("/product/recent")
     public ResponseEntity<List<ProductDTO>> getRecentlyProducts(){
         return ResponseEntity.ok(productService.getRecentlyProducts());
