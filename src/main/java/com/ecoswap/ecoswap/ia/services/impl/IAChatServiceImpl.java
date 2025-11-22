@@ -83,7 +83,7 @@ public class IAChatServiceImpl implements IAChatService {
             
         } catch (Exception e) {
             response.put("error", "Error al buscar productos");
-            response.put("message", "⚠️ No se pudieron cargar los productos en este momento");
+            response.put("message", "No se pudieron cargar los productos en este momento");
         }
         
         return response;
@@ -167,9 +167,14 @@ public class IAChatServiceImpl implements IAChatService {
             4. Orientar sobre el proceso de intercambio
             5. Mantener conversaciones coherentes recordando el contexto
             
+            RESTRICCIONES IMPORTANTES - DEBES CUMPLIR ESTRICTAMENTE:
+            - SOLO puedes responder preguntas relacionadas con EcoSwap, intercambios de productos y sostenibilidad
+            - NO respondas preguntas sobre geografía, historia, matemáticas, ciencias, entretenimiento, noticias, o cualquier tema que NO sea EcoSwap
+            - Si te preguntan algo fuera de tu área de especialidad, responde: "Soy el asistente especializado de EcoSwap y solo puedo ayudarte con intercambios de productos. ¿En qué puedo asistirte con EcoSwap? "
+            - NO actúes como un asistente general - SOLO eres experto en intercambios de EcoSwap
+            
             REGLAS DE COMUNICACIÓN:
             - Siempre menciona productos ESPECÍFICOS cuando estén disponibles
-            - Usa emojis apropiados: 🔄 ♻️ 🌱 📦 💚 🔍
             - Respuestas máximo 150 palabras
             - Tono conversacional y amigable
             - Prioriza información útil y relevante
@@ -178,7 +183,8 @@ public class IAChatServiceImpl implements IAChatService {
             
             ESTRUCTURA DE RESPUESTAS:
             - Saluda si es primer contacto
-            - Responde específicamente a la consulta
+            - Responde específicamente a la consulta SOLO si es sobre EcoSwap
+            - Si la pregunta NO es sobre EcoSwap, usa la respuesta de restricción
             - Menciona productos relevantes disponibles
             - Sugiere próximos pasos o preguntas de seguimiento
             
@@ -202,7 +208,7 @@ public class IAChatServiceImpl implements IAChatService {
             - SIEMPRE menciona productos REALES de la lista cuando sea relevante
             - Usa el formato: "He encontrado X productos disponibles en [categoría]"
             - Sé específico con nombres de productos y categorías
-            - Máximo 150 palabras, usa emojis 🔄♻️🌱
+            - Máximo 150 palabras
             
             CONSULTA DEL USUARIO: "%s"
             
@@ -216,6 +222,12 @@ public class IAChatServiceImpl implements IAChatService {
     public String getFallbackResponse(String userMessage) {
         String lower = userMessage.toLowerCase();
         
+        // Detectar preguntas que NO son sobre EcoSwap
+        if (isOffTopicQuestion(lower)) {
+            return "🤖 Soy el asistente especializado de EcoSwap y solo puedo ayudarte con intercambios de productos. ¿En qué puedo asistirte con EcoSwap? ";
+        }
+        
+        // Búsqueda específica de productos
         if (lower.contains("bicicleta")) {
             return searchProductsInDatabase("bicicleta", "Deportes") + 
                    "\n💡 ¿Deseas ver más detalles de alguna bicicleta específica?";
@@ -231,25 +243,28 @@ public class IAChatServiceImpl implements IAChatService {
                    "\n💡 Especifica el uso que le darás para mejores recomendaciones.";
         }
         
+        // Intercambios generales
         if (lower.contains("intercambiar") || lower.contains("cambiar") || lower.contains("intercambio")) {
-            return "🔄 ¡Perfecto! Te ayudo a encontrar intercambios.\n\n" +
+            return "¡Perfecto! Te ayudo a encontrar intercambios.\n\n" +
                    getAvailableProductsByCategory() +
                    "\n📝 Cuéntame qué producto tienes para intercambiar y te sugiero opciones específicas.";
         }
         
+        // Búsquedas generales
         if (lower.contains("buscar") || lower.contains("encontrar") || lower.contains("necesito")) {
             return "🔍 ¡Te muestro productos disponibles ahora!\n\n" +
                    getAvailableProductsByCategory() +
                    "\n💬 Dime qué tipo específico buscas para filtrar mejor.";
         }
         
-        return "🌱 ¡Hola! Soy tu asistente de intercambio de EcoSwap.\n\n" +
+        return "🌱 ¡Hola! Soy tu asistente especializado de intercambio de EcoSwap.\n\n" +
                "📦 **Productos disponibles actualmente:**\n" +
                getAvailableProductsByCategory() +
-               "\n💬 **¿En qué te puedo ayudar?**\n" +
-               "• Buscar un producto específico 🔍\n" +
-               "• Sugerir intercambios para tus productos 🔄\n" +
-               "• Filtrar por categoría 📂";
+               "\n💬 **¿En qué puedo ayudarte con intercambios?**\n" +
+               "• Buscar un producto específico \n" +
+               "• Sugerir intercambios para tus productos \n" +
+               "• Filtrar por categoría \n" +
+               "\n💡 Solo respondo preguntas sobre EcoSwap e intercambios de productos.";
     }
 
     @Override
@@ -300,7 +315,7 @@ public class IAChatServiceImpl implements IAChatService {
                 .collect(Collectors.toList());
             
             if (products.isEmpty()) {
-                return "📂 No hay productos disponibles en este momento.";
+                return "No hay productos disponibles en este momento.";
             }
             
             // Agrupar por categoría
@@ -310,7 +325,7 @@ public class IAChatServiceImpl implements IAChatService {
             
             StringBuilder result = new StringBuilder();
             for (Map.Entry<String, List<ProductDTO>> entry : productsByCategory.entrySet()) {
-                result.append("📂 **").append(entry.getKey()).append(":**\n");
+                result.append(" **").append(entry.getKey()).append(":**\n");
                 
                 entry.getValue().stream().limit(3).forEach(product -> {
                     String title = product.getTitle() != null ? product.getTitle() : "Producto";
@@ -325,7 +340,45 @@ public class IAChatServiceImpl implements IAChatService {
             
             return result.toString();
         } catch (Exception e) {
-            return "📂 Hay varios productos disponibles. Revisa la plataforma para ver todas las opciones.";
+            return "Hay varios productos disponibles. Revisa la plataforma para ver todas las opciones.";
         }
+    }
+
+    /**
+     * Detecta si una pregunta está fuera del alcance de EcoSwap
+     */
+    private boolean isOffTopicQuestion(String lowerMessage) {
+        // Palabras clave que indican preguntas fuera del alcance de EcoSwap
+        String[] offTopicKeywords = {
+            "geografia", "capital", "pais", "continente", "oceano", "rio", "montaña",
+            "historia", "guerra", "año", "siglo", "presidente", "rey", "imperio",
+            "matematicas", "calcular", "ecuacion", "formula", "algebra", "geometria",
+            "fisica", "quimica", "biologia", "medicina", "enfermedad", "sintoma",
+            "cocina", "receta", "ingredientes", "como cocinar", "preparar comida",
+            "clima", "tiempo", "temperatura", "lluvia", "sol", "viento",
+            "deportes", "futbol", "basketball", "tenis", "olimpiadas", "equipo",
+            "entretenimiento", "pelicula", "serie", "actor", "musica", "cancion",
+            "tecnologia", "programacion", "codigo", "algoritmo", "base de datos",
+            "noticias", "politica", "elecciones", "gobierno", "partido politico",
+            "religion", "dios", "iglesia", "biblia", "orar",
+            "amor", "relaciones", "cita", "matrimonio", "divorcio"
+        };
+        
+        // Verificar si contiene palabras clave fuera del tema
+        for (String keyword : offTopicKeywords) {
+            if (lowerMessage.contains(keyword)) {
+                return true;
+            }
+        }
+        
+        // Patrones de preguntas generales que no son sobre EcoSwap
+        return lowerMessage.matches(".*¿?(que|cual|como|donde|cuando|quien|por que).*") && 
+               !lowerMessage.contains("ecoswap") && 
+               !lowerMessage.contains("intercambio") && 
+               !lowerMessage.contains("producto") && 
+               !lowerMessage.contains("cambiar") && 
+               !lowerMessage.contains("busco") && 
+               !lowerMessage.contains("necesito") &&
+               !lowerMessage.contains("tengo");
     }
 }
